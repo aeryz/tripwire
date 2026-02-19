@@ -4,7 +4,7 @@ fn main() {
     println!("cargo::rerun-if-changed=wasm-binary");
 
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let wasm_dir = manifest_dir.join("wasm-binary");
+    let wasm_dir = manifest_dir.join("../wasm-binary");
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let wasm_out = out_dir.join("wasm_binary.wasm");

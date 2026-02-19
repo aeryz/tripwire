@@ -1,15 +1,17 @@
 use std::{fs, marker::PhantomData, path::Path};
 
 use anyhow::anyhow;
-use wasmtime::{
-    Config, Engine, Instance, Linker, Module, ProfilingStrategy, Store, WasmParams, WasmResults,
-};
+use wasmtime::{Config, Engine, Instance, Linker, Module, ProfilingStrategy, Store};
 
 pub trait WasmVM {
     const ALLOC_FN_NAME: &str;
     const MEMORY_NAME: &str;
 
     type Data: 'static;
+
+    fn define_imports(_: &mut Linker<Self::Data>) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 pub struct WasmRunner<VM: WasmVM> {
@@ -37,7 +39,8 @@ impl<VM: WasmVM> WasmRunner<VM> {
 
         let module = Module::new(&engine, fs::read(path)?)?;
 
-        let linker = Linker::new(&engine);
+        let mut linker = Linker::new(&engine);
+        VM::define_imports(&mut linker)?;
 
         let mut store = Store::new(&engine, data);
 

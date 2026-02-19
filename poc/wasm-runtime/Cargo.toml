@@ -1,0 +1,9 @@
+[package]
+name = "wasm-runtime"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+wasmtime = { workspace = true }
+anyhow = { workspace = true }
+interprocess = "2.3.1"

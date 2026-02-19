@@ -2,6 +2,11 @@
 
 use core::str;
 
+#[link(wasm_import_module = "host")]
+unsafe extern "C" {
+    fn debug(x: i32);
+}
+
 #[inline(never)]
 fn concat_str(x: &str, y: &str) -> String {
     format!("{x}{y}")
@@ -124,6 +129,11 @@ fn leak_string(mut s: String) -> (u32, u32, u32) {
     (ptr as u32, len as u32, cap as u32)
 }
 
+#[inline(never)]
+fn call_debug(param: i32) {
+    unsafe { debug(param) };
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
     let mut buf = Vec::<u8>::with_capacity(size);
@@ -148,6 +158,7 @@ pub extern "C" fn entrypoint(
     x2: u32,
     y2: u32,
 ) -> *mut u8 {
+    call_debug(25);
     // Inputs as borrowed &str
     let x1_raw = unsafe { str::from_raw_parts(x1_ptr, x1_len) };
     let y1_raw = unsafe { str::from_raw_parts(y1_ptr, y1_len) };
@@ -185,5 +196,7 @@ pub extern "C" fn entrypoint(
         *(p.add(4) as *mut u32) = s_len;
         *(p.add(8) as *mut u32) = n;
     }
+
+    call_debug(1238762);
     out_ptr
 }
