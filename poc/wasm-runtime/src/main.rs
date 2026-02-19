@@ -53,6 +53,7 @@ fn load_and_run_wasm() -> anyhow::Result<()> {
             let mut conn = BufReader::new(conn);
             conn.get_mut().write_all(b"Hello from client!\n").unwrap();
             let mut buf = String::new();
+
             conn.read_line(&mut buf).unwrap();
 
             println!("got the go signal: {buf}");

@@ -5,11 +5,12 @@ use std::{
 };
 
 use interprocess::local_socket::{GenericFilePath, ListenerOptions, prelude::*};
-use libc::{_SC_PAGESIZE, PROT_EXEC, PROT_READ, PROT_WRITE, mprotect};
+use libc::{_SC_PAGESIZE, PROT_EXEC, PROT_READ, PROT_WRITE, SIGCONT, mprotect};
 use nix::{
     errno::{self, Errno},
     sys::{
-        ptrace,
+        ptrace::{self, AddressType, Request, RequestType},
+        signal::Signal,
         wait::{WaitPidFlag, WaitStatus, waitpid},
     },
     unistd::Pid,
@@ -32,7 +33,21 @@ async fn main() -> anyhow::Result<()> {
     let child_pid = child.id();
     let ptrace_pid = Pid::from_raw(child_pid as i32);
     ptrace::seize(ptrace_pid, ptrace::Options::empty()).unwrap();
+    // ptrace::attach(ptrace_pid).unwrap();
     println!("child pid: {child_pid}");
+
+    // let res = unsafe {
+    //     libc::ptrace(
+    //         Request::PTRACE_LISTEN as RequestType,
+    //         libc::pid_t::from(ptrace_pid),
+    //         std::ptr::null_mut() as AddressType,
+    //         std::ptr::null_mut() as *mut c_void,
+    //     )
+    // };
+
+    // if res != 0 {
+    //     panic!("listen errno: {}", Errno::result(res).unwrap())
+    // }
 
     let opts = ListenerOptions::new().name(
         format!("/tmp/{child_pid}.sock")
@@ -81,6 +96,10 @@ async fn main() -> anyhow::Result<()> {
         .unwrap();
         println!("after write");
 
+        std::thread::spawn(move || attach_ptrace(ptrace_pid).unwrap());
+
+        ptrace::cont(ptrace_pid, Some(Signal::SIGCONT)).unwrap();
+
         let mut conn = BufReader::new(conn);
 
         std::thread::sleep(std::time::Duration::from_secs(2));
@@ -105,16 +124,14 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn attach_ptrace(pid: i32) -> anyhow::Result<()> {
-    let pid = Pid::from_raw(pid);
-    ptrace::attach(pid)?;
-
-    println!("attach");
+fn attach_ptrace(pid: Pid) -> anyhow::Result<()> {
     match waitpid(pid, None) {
-        Ok(_) => println!("attached bro"),
+        Ok(WaitStatus::Stopped(_, Signal::SIGTRAP)) => {
+            println!("got the sigtrap bro")
+        }
+        Ok(_) => {}
         Err(_) => panic!("oh boy"),
     }
-    println!("attach2");
 
     Ok(())
 }
