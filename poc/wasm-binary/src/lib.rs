@@ -158,7 +158,7 @@ pub extern "C" fn entrypoint(
     x2: u32,
     y2: u32,
 ) -> *mut u8 {
-    call_debug(25);
+    call_debug(26);
     // Inputs as borrowed &str
     let x1_raw = unsafe { str::from_raw_parts(x1_ptr, x1_len) };
     let y1_raw = unsafe { str::from_raw_parts(y1_ptr, y1_len) };

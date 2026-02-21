@@ -15,5 +15,4 @@ tokio = { workspace = true , features = [
   "macros",
   "signal",
 ]}
-interprocess = "2.3.1"
 
