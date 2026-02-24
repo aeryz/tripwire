@@ -2,6 +2,7 @@ use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style, Stylize},
+    text::Text,
     widgets::{Block, BorderType, Clear, List, ListItem, Paragraph, StatefulWidget, Widget},
 };
 
@@ -42,12 +43,6 @@ impl Widget for &App {
             .title_alignment(Alignment::Center)
             .border_type(BorderType::Rounded);
 
-        let left_top = Paragraph::new(format!("Counter",))
-            .block(left_top_block)
-            .fg(Color::Yellow)
-            .bg(Color::Black)
-            .centered();
-
         // --- Left / Bottom pane ---
         let left_bottom_block = Block::bordered()
             .title("Left / Bottom")
@@ -74,30 +69,57 @@ impl Widget for &App {
             // optional marker shown beside selected item
             .highlight_symbol("➤ ");
 
+        if let Some(mapping) = &self.debugger_ctx.function_mapping {
+            let functions: Vec<ListItem> = mapping
+                .into_iter()
+                .map(|(k, v)| ListItem::new(format!("{k}: {}", v.symbol)))
+                .collect();
+            let function_list = List::new(functions)
+                .block(left_top_block)
+                // style for unselected items
+                .style(Style::default().fg(Color::White).bg(Color::Black))
+                // style for the selected row
+                .highlight_style(
+                    Style::default()
+                        .fg(Color::Black)
+                        .bg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                )
+                // optional marker shown beside selected item
+                .highlight_symbol("➤ ");
+            StatefulWidget::render(
+                function_list,
+                left_rows[0],
+                buf,
+                &mut self.mapping_list_state.clone(),
+            );
+        } else {
+            let left_top = Paragraph::new(format!("Counter",))
+                .block(left_top_block)
+                .fg(Color::Yellow)
+                .bg(Color::Black)
+                .centered();
+            left_top.render(left_rows[0], buf);
+        }
+
         // --- Right / Big pane ---
         let right_block = Block::bordered()
             .title("Right / Big")
             .title_alignment(Alignment::Center)
             .border_type(BorderType::Rounded);
 
-        let right_text = "This is the big right pane.\n\
-Press `Esc`, `Ctrl-C` or `q` to quit.\n\
-Use left/right to change the counter.";
-
-        let right_pane = Paragraph::new(right_text)
+        let right_pane = Paragraph::new(Text::styled(&self.disas_str, Style::default()))
             .block(right_block)
             .fg(Color::Cyan)
             .bg(Color::Black);
 
         StatefulWidget::render(list, left_rows[1], buf, &mut self.list_state.clone());
 
-        // 3) Render everything into its region
-        left_top.render(left_rows[0], buf);
         // list.render(left_rows[1], buf);
         right_pane.render(right, buf);
 
         // Popup overlay
-        if self.mode == Mode::AttachPopup {
+        if self.mode == Mode::StartProcessPopup {
             let popup_area = centered_rect(60, 25, area);
 
             // Clears underneath so the popup doesn't blend with background

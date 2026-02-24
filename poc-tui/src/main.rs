@@ -1,7 +1,9 @@
 use crate::app::App;
 
 pub mod app;
+pub mod debugger_ctx;
 pub mod event;
+pub mod function_mapping;
 pub mod ui;
 
 fn main() -> color_eyre::Result<()> {
