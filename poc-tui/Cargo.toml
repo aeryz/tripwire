@@ -1,0 +1,19 @@
+[package]
+name = "poc-tui"
+version = "0.1.0"
+description = "PoC for the new WASM debugger"
+authors = ["aeryz <abdullaheryz@protonmail.com>"]
+license = "MIT"
+edition = "2024"
+
+[dependencies]
+crossterm = "0.28.1"
+ratatui = "0.30.0"
+color-eyre = "0.6.3"
+
+# Read the optimization guideline for more details: https://ratatui.rs/recipes/apps/release-your-app/#optimizations
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

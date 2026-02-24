@@ -1,20 +1,31 @@
 [workspace]
-edition = "2024"
-resolver = "3"
 members = [
-  "poc",
-  "poc/wasm-binary",
-  "poc/wasm-runtime",
+    "poc",
+    "poc-tui",
+    "poc/wasm-binary",
+    "poc/wasm-runtime",
 ]
+resolver = "3"
 
 [workspace.package]
 license = "MIT OR Apache-2.0"
 edition = "2024"
 
 [workspace.dependencies]
-anyhow = { version = "1", default-features = false }
-env_logger = { version = "0.11.5", default-features = false }
-log = { version = "0.4.22", default-features = false }
-tokio = { version = "1.40.0", default-features = false }
 wasmtime = "41.0.3"
 
+[workspace.dependencies.anyhow]
+version = "1"
+default-features = false
+
+[workspace.dependencies.env_logger]
+version = "0.11.5"
+default-features = false
+
+[workspace.dependencies.log]
+version = "0.4.22"
+default-features = false
+
+[workspace.dependencies.tokio]
+version = "1.40.0"
+default-features = false
