@@ -14,6 +14,8 @@ use crate::perf_util::FunctionMapping;
 pub mod cosmwasm;
 pub mod perf_util;
 
+pub const WASM_MEMORY_IMAGE_IDENT: &str = "wasm-memory-image";
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
@@ -47,7 +49,24 @@ async fn main() -> anyhow::Result<()> {
                     //
                     // https://github.com/bytecodealliance/wasmtime/blob/ee7e125309f5bc784b8feb8969261ae41fb4703b/crates/wasmtime/src/runtime/vm/sys/unix/vm.rs#L120
                     if syscall.nr == libc::SYS_memfd_create as u64 {
-                        break;
+                        let mut memory_name: Vec<u8> = Vec::new();
+                        let mut len = (WASM_MEMORY_IMAGE_IDENT.len() / size_of::<usize>()) + 1;
+                        if WASM_MEMORY_IMAGE_IDENT.len() % size_of::<usize>() == 0 {
+                            len -= 1;
+                        }
+                        for i in 0..len {
+                            let data = ptrace::read(
+                                ptrace_pid,
+                                ((syscall.args[0] as usize) + (i * size_of::<usize>()))
+                                    as *mut c_void,
+                            )?;
+                            memory_name
+                                .extend(data.to_le_bytes().iter().take_while(|i| *i != &0u8));
+                        }
+
+                        if &memory_name == WASM_MEMORY_IMAGE_IDENT.as_bytes() {
+                            break;
+                        }
                     }
                 }
             }
